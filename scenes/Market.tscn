@@ -1,0 +1,58 @@
+[gd_scene load_steps=3 format=3 uid="uid://da2hrhxennnqi"]
+
+[ext_resource type="Script" path="res://scripts/Market.gd" id="1_hlir5"]
+
+[sub_resource type="Theme" id="Theme_rqv28"]
+
+[node name="Market" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_rqv28")
+script = ExtResource("1_hlir5")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(280, 2.08165e-12)
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Label" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Market"
+
+[node name="GridContainer" type="GridContainer" parent="VBoxContainer"]
+custom_minimum_size = Vector2(280, 2.08165e-12)
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 80
+columns = 5
+
+[node name="Species" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="Buy" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="Sell" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="Owned" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="Actions" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="MarketRows" type="GridContainer" parent="VBoxContainer"]
+custom_minimum_size = Vector2(280, 2.08165e-12)
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 80
+columns = 5
+
+[node name="Button" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Back"

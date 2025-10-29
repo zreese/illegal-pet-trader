@@ -1,0 +1,53 @@
+[gd_scene load_steps=2 format=3 uid="uid://ca2u684ci7bdk"]
+
+[ext_resource type="Script" path="res://scripts/Main.gd" id="1_6u7gj"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_6u7gj")
+
+[node name="Main" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 72.0
+offset_top = 164.0
+offset_right = 112.0
+offset_bottom = 204.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Main"]
+layout_mode = 0
+offset_left = 143.0
+offset_top = 37.0
+offset_right = 495.0
+offset_bottom = 246.0
+
+[node name="lbl_day" type="Label" parent="Main/VBoxContainer"]
+layout_mode = 2
+
+[node name="lbl_money" type="Label" parent="Main/VBoxContainer"]
+layout_mode = 2
+
+[node name="lbl_heat" type="Label" parent="Main/VBoxContainer"]
+layout_mode = 2
+
+[node name="lbl_reputation" type="Label" parent="Main/VBoxContainer"]
+layout_mode = 2
+
+[node name="lbl_message" type="Label" parent="Main/VBoxContainer"]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="Main/VBoxContainer"]
+layout_mode = 2
+text = "Next Turn"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Main/VBoxContainer"]
+layout_mode = 2
+
+[node name="MarketButton" type="Button" parent="Main/VBoxContainer"]
+layout_mode = 2
+text = "Market"
+
+[node name="ResetButton" type="Button" parent="Main/VBoxContainer"]
+layout_mode = 2
+text = "Reset Save"
