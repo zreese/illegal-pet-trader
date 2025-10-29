@@ -31,6 +31,9 @@ layout_mode = 2
 [node name="lbl_heat" type="Label" parent="Main/VBoxContainer"]
 layout_mode = 2
 
+[node name="lbl_capacity" type="Label" parent="Main/VBoxContainer"]
+layout_mode = 2
+
 [node name="lbl_reputation" type="Label" parent="Main/VBoxContainer"]
 layout_mode = 2
 

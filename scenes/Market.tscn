@@ -29,30 +29,42 @@ custom_minimum_size = Vector2(280, 2.08165e-12)
 layout_mode = 2
 theme_override_constants/h_separation = 20
 theme_override_constants/v_separation = 80
-columns = 5
+columns = 6
 
 [node name="Species" type="Label" parent="VBoxContainer/GridContainer"]
 layout_mode = 2
+text = "Species"
+
+[node name="size" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+text = "Size"
 
 [node name="Buy" type="Label" parent="VBoxContainer/GridContainer"]
 layout_mode = 2
+text = "Buy Price"
 
 [node name="Sell" type="Label" parent="VBoxContainer/GridContainer"]
 layout_mode = 2
+text = "Sell Price"
 
 [node name="Owned" type="Label" parent="VBoxContainer/GridContainer"]
 layout_mode = 2
+text = "Owned"
 
 [node name="Actions" type="Label" parent="VBoxContainer/GridContainer"]
 layout_mode = 2
+text = "Actions"
 
 [node name="MarketRows" type="GridContainer" parent="VBoxContainer"]
 custom_minimum_size = Vector2(280, 2.08165e-12)
 layout_mode = 2
 theme_override_constants/h_separation = 20
 theme_override_constants/v_separation = 80
-columns = 5
+columns = 6
 
 [node name="Button" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 text = "Back"
+
+[node name="lbl_capacity" type="Label" parent="VBoxContainer"]
+layout_mode = 2

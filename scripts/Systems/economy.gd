@@ -4,11 +4,12 @@ extends Node
 class_name Economy
 
 # === Base market data ===
+# MODIFIED: Added "size" and "feed_cost" per GDD
 var market := {
-	"parrot": {"buy_price": 300, "sell_price": 500, "supply": 80, "demand": 50, "risk": 0.1},
-	"python": {"buy_price": 600, "sell_price": 900, "supply": 40, "demand": 70, "risk": 0.25},
-	"turtle": {"buy_price": 150, "sell_price": 300, "supply": 100, "demand": 20, "risk": 0.05},
-	"lemur": {"buy_price": 1200, "sell_price": 2000, "supply": 10, "demand": 90, "risk": 0.4},
+	"parrot": {"buy_price": 300, "sell_price": 500, "supply": 80, "demand": 50, "risk": 0.1, "size": 2, "feed_cost": 5.0},
+	"python": {"buy_price": 600, "sell_price": 900, "supply": 40, "demand": 70, "risk": 0.25, "size": 5, "feed_cost": 10.0},
+	"turtle": {"buy_price": 150, "sell_price": 300, "supply": 100, "demand": 20, "risk": 0.05, "size": 1, "feed_cost": 2.0},
+	"lemur": {"buy_price": 1200, "sell_price": 2000, "supply": 10, "demand": 90, "risk": 0.4, "size": 3, "feed_cost": 15.0},
 }
 
 # === Tunables ===
@@ -24,6 +25,14 @@ func get_price(species: String, is_buy: bool = true) -> float:
 		push_warning("Unknown species: " + species)
 		return 0
 	return market[species]["buy_price"] if is_buy else market[species]["sell_price"]
+
+# NEW: Helper function to get animal size
+func get_size(species: String) -> int:
+	return market.get(species, {}).get("size", 1)
+
+# NEW: Helper function to get animal feed cost
+func get_feed_cost(species: String) -> float:
+	return market.get(species, {}).get("feed_cost", 1.0)
 
 func update_market() -> void:
 	for species in market.keys():

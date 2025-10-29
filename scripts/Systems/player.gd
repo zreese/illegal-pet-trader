@@ -15,6 +15,7 @@ var data := {
 	"morale": 100.0,
 	"day": 1,
 	"territories": 1,
+	"capacity": 25, # NEW: Added capacity to save data
 	"inventory": {},
 	"upgrades": {},
 	"events": []
@@ -61,6 +62,17 @@ func add_morale(amount: float) -> void:
 func advance_day() -> void:
 	data.day += 1
 	_auto_save()
+
+# NEW: Functions to get and upgrade inventory capacity
+func get_inventory_capacity() -> int:
+	return data.get("capacity", 25)
+
+func upgrade_inventory_capacity(new_capacity: int):
+	data.capacity = new_capacity
+	_auto_save()
+	# We'd also need to tell the inventory node to update its internal value
+	if inventory_ref:
+		inventory_ref.set_capacity_max(new_capacity)
 
 # === Save and Load ===
 func save_game() -> void:
@@ -124,8 +136,11 @@ func _load_inventory_from_data():
 		return
 	inventory_ref.items.clear()
 	inventory_ref.capacity_used = 0
+	# NEW: Set the capacity from the loaded player data
+	inventory_ref.set_capacity_max(get_inventory_capacity())
 	for species in data["inventory"].keys():
 		var entry = data["inventory"][species]
+		# This will now correctly calculate capacity_used
 		inventory_ref.add_item(species, entry["qty"], entry["avg_cost"])
 
 # === Inventory signal handler ===
@@ -141,6 +156,7 @@ func reset_game() -> void:
 		"morale": 100.0,
 		"day": 1,
 		"territories": 1,
+		"capacity": 25, # MODIFIED: Reset capacity too
 		"inventory": {},
 		"upgrades": {},
 		"events": []
@@ -148,4 +164,5 @@ func reset_game() -> void:
 	if inventory_ref:
 		inventory_ref.items.clear()
 		inventory_ref.capacity_used = 0
+		inventory_ref.set_capacity_max(data.capacity) # MODIFIED
 	save_game()

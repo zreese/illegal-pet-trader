@@ -9,96 +9,125 @@ extends Control
 @onready var log = $Main/VBoxContainer/RichTextLabel
 @onready var btn_market = $Main/VBoxContainer/MarketButton
 @onready var btn_reset = $Main/VBoxContainer/ResetButton
+# NEW: Add a label for capacity on the main screen
+@onready var lbl_capacity = $Main/VBoxContainer/lbl_capacity 
 
 @onready var player_state = preload("res://scripts/Systems/player.gd").new()
 @onready var economy = preload("res://scripts/Systems/economy.gd").new()
 @onready var inventory = preload("res://scripts/Systems/inventory.gd").new()
 
-var player = {}
-var day = 1
+var player = {} # MODIFIED: This is now largely managed by player_state.data
+var day = 1 # MODIFIED: This is now managed by player_state.data
 
 var market_instance : Node = null
 var market_open := false
 
 func _ready():
-	_init_player()
+	# _init_player() # MODIFIED: This is handled by player_state defaults
 	btn_reset.pressed.connect(_on_reset_pressed)
 	add_child(economy)
 	add_child(inventory)
 	add_child(player_state)
-	player_state.register_inventory(inventory)
+	
+	# NEW: Link systems together. Order is important!
+	# Inventory needs economy to calculate size/cost
+	inventory.register_economy(economy) 
+	# Player loads data and then populates inventory
+	player_state.register_inventory(inventory) 
+
+	# MODIFIED: Connect to player_state signals
 	player_state.player_loaded.connect(_on_player_loaded)
 	player_state.player_saved.connect(_on_player_saved)
-	
 	economy.transaction_complete.connect(_on_transaction_complete)
+	
+	# NEW: Connect to inventory signals
+	inventory.inventory_changed.connect(_update_ui) # Refresh UI on change
+	inventory.over_capacity_warning.connect(_on_over_capacity)
+
+	_load_player_data() # NEW: Load data into local vars
 	_update_ui()
 	btn_next.pressed.connect(_next_turn)
 	btn_market.pressed.connect(_open_market)
 
-
+# MODIFIED: This is now just for local reference, player_state is the authority
+func _load_player_data():
+	player = player_state.data
+	day = player_state.data.day
+	
 func _init_player():
-	player = {
-		"money": 1000.0,
-		"heat": 0.0,
-		"reputation": 10.0,
-		"morale": 100.0
-	}
+	# This function is no longer needed, player_state handles defaults
+	pass
 
 func _next_turn():
 	_close_market_if_open()  # Ensures modal closes first
-	day += 1
+	
+	# MODIFIED: All progression logic is on player_state
 	player_state.advance_day()
+	day = player_state.data.day # Sync local var
+	
+	# NEW: Process daily upkeep and risks
+	var upkeep_results = inventory.process_daily_upkeep_and_risk()
+	var feed_cost = upkeep_results.feed_cost
+	var deaths = upkeep_results.deaths
+	
+	var message = ""
+	
+	if feed_cost > 0:
+		player_state.add_money(-feed_cost)
+		message += "Paid $%.2f for feed. " % feed_cost
+		
+	if deaths > 0:
+		player_state.add_morale(-5 * deaths) # Ethical Stressor
+		message += "%d animals perished!" % deaths
+		_log_event("%d animals perished due to poor conditions." % deaths)
+
+	lbl_message.text = message
+	
+	# Old simulation logic, can be replaced by real events
 	player_state.add_heat(randf_range(-2, 5))
-	player_state.add_money(randi_range(-100, 200))
+	# player_state.add_money(randi_range(-100, 200)) # Replaced by feed cost
+	
 	_update_ui()
 
 func _simulate_economy():
-	var profit = randi_range(-100, 200)
-	player.money += profit
-	player.heat = clamp(player.heat + randf_range(-2, 5), 0, 100)
-	player.reputation = clamp(player.reputation + randf_range(-1, 2), 0, 100)
-	lbl_message.text = "Trade complete. Profit: $" + str(profit)
+	# This function is deprecated by the new systems
+	pass
 
 func _simulate_events():
-	var roll = randf()
-	if roll < 0.1:
-		player.heat += 10
-		lbl_message.text = "Rumors of a bust circulate. Heat increases."
-	elif roll < 0.2:
-		player.money -= 150
-		lbl_message.text = "You paid off a customs officer."
+	# This function is deprecated by the new systems
+	pass
 
 func _update_ui():
 	lbl_day.text = "Day: " + str(day)
 	lbl_money.text = "Money: $" + str(round(player.money))
 	lbl_heat.text = "Heat: " + str(round(player.heat))
 	lbl_reputation.text = "Reputation: " + str(round(player.reputation))
+	# NEW: Update capacity label
+	if lbl_capacity and inventory:
+		lbl_capacity.text = "Capacity: %d / %d" % [inventory.capacity_used, inventory.capacity_max]
 
 func _log_event(msg):
 	log.append_text(msg + "\n")
 
 func _on_transaction_complete(profit, message):
-	player.money += profit
+	# MODIFIED: Use player_state to manage money
+	player_state.add_money(profit)
 	lbl_message.text = message
 	_update_ui()
+	
+# NEW: Handle over capacity warning
+func _on_over_capacity():
+	_log_event("WARNING: Over capacity! Animals are at high risk.")
+	lbl_message.text = "WARNING: Storage is full! Animals may die."
 
+# === DEPRECATED FUNCTIONS ===
+# These functions are hard-coded and should be removed
+# The Market.gd screen now handles this dynamically
 func _buy_parrot():
-	var result = economy.buy("parrot", 2, player.money)
-	if result.success:
-		player.money -= result.money_spent
-		inventory.add_item("parrot", 2, economy.get_price("parrot"))
-		lbl_message.text = "Bought 2 parrots."
-	else:
-		lbl_message.text = result.error
+	pass
 
 func _sell_parrot():
-	var result = inventory.remove_item("parrot", 1)
-	if result.success:
-		var sale = economy.sell("parrot", 1)
-		player.money += sale.profit
-		lbl_message.text = "Sold, but shipment was seized!" if sale.busted else "Sold 1 parrot."
-	else:
-		lbl_message.text = result.error
+	pass
 
 # === MARKET CONTROL ===
 func _open_market():
@@ -106,8 +135,17 @@ func _open_market():
 		return  # Prevent multiple markets
 
 	market_instance = preload("res://scenes/Market.tscn").instantiate()
-	add_child(market_instance)
+	
+	# --- THIS IS THE FIX ---
+	# Call init() *before* add_child().
+	# This ensures the economy/inventory variables are set *before*
+	# Godot calls _ready() on the market_instance.
 	market_instance.init(economy, inventory, player_state.data)
+	
+	# Now add_child() can safely trigger _ready()
+	add_child(market_instance)
+	# -----------------------
+	
 	market_open = true
 
 	# Connect close signal from Market.gd
@@ -119,6 +157,7 @@ func _on_market_closed():
 		market_instance.queue_free()
 		market_instance = null
 	market_open = false
+	_update_ui() # NEW: Refresh main UI when market closes
 
 func _close_market_if_open():
 	if market_open and market_instance:
@@ -128,6 +167,10 @@ func _close_market_if_open():
 
 func _on_player_loaded():
 	print("Player state loaded.")
+	_load_player_data() # NEW: Sync local data
+	# NEW: Set inventory capacity from loaded data
+	if inventory and player_state:
+		inventory.set_capacity_max(player_state.get_inventory_capacity())
 	_update_ui()
 
 func _on_player_saved():
@@ -137,5 +180,3 @@ func _on_reset_pressed():
 	_close_market_if_open()
 	player_state.reset_game()
 	get_tree().reload_current_scene()
-	_update_ui()
-	lbl_message.text = "Save file reset."
