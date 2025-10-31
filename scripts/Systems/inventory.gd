@@ -8,7 +8,7 @@ class_name Inventory
 #   "python": {"qty": 1, "avg_cost": 600.0} }
 
 var items := {}
-var capacity_max := 0 # MODIFIED: Will be set by Player node
+var capacity_max := 25 # MODIFIED: Will be set by Player node
 var capacity_used := 0
 
 var economy_ref : Economy # NEW: Reference to economy node

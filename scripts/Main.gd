@@ -9,12 +9,12 @@ extends Control
 @onready var log = $Main/VBoxContainer/RichTextLabel
 @onready var btn_market = $Main/VBoxContainer/MarketButton
 @onready var btn_reset = $Main/VBoxContainer/ResetButton
-# NEW: Add a label for capacity on the main screen
 @onready var lbl_capacity = $Main/VBoxContainer/lbl_capacity 
 
 @onready var player_state = preload("res://scripts/Systems/player.gd").new()
 @onready var economy = preload("res://scripts/Systems/economy.gd").new()
 @onready var inventory = preload("res://scripts/Systems/inventory.gd").new()
+@onready var events = preload("res://scripts/Systems/events.gd").new()
 
 var player = {} # MODIFIED: This is now largely managed by player_state.data
 var day = 1 # MODIFIED: This is now managed by player_state.data
@@ -28,17 +28,24 @@ func _ready():
 	add_child(economy)
 	add_child(inventory)
 	add_child(player_state)
+	add_child(events)
 	
 	# NEW: Link systems together. Order is important!
 	# Inventory needs economy to calculate size/cost
 	inventory.register_economy(economy) 
 	# Player loads data and then populates inventory
 	player_state.register_inventory(inventory) 
+	# Register player with events system
+	events.register_player(player_state)
 
 	# MODIFIED: Connect to player_state signals
 	player_state.player_loaded.connect(_on_player_loaded)
 	player_state.player_saved.connect(_on_player_saved)
 	economy.transaction_complete.connect(_on_transaction_complete)
+	# Connect event system signals
+	events.event_triggered.connect(_on_event_triggered)
+	events.event_resolved.connect(_on_event_resolved)
+	events.notification.connect(_on_event_notification)
 	
 	# NEW: Connect to inventory signals
 	inventory.inventory_changed.connect(_update_ui) # Refresh UI on change
@@ -88,6 +95,8 @@ func _next_turn():
 	# player_state.add_money(randi_range(-100, 200)) # Replaced by feed cost
 	
 	_update_ui()
+	# Roll for a random event each turn
+	events.advance_turn()
 
 func _simulate_economy():
 	# This function is deprecated by the new systems
@@ -108,6 +117,39 @@ func _update_ui():
 
 func _log_event(msg):
 	log.append_text(msg + "\n")
+
+func _on_event_triggered(payload: Dictionary) -> void:
+	# Minimal indicator in UI/log when an event occurs
+	var title: String = str(payload.get("title", "Event"))
+	var text: String = str(payload.get("text", ""))
+	var choices: Array = payload.get("choices", [])
+	if typeof(choices) != TYPE_ARRAY:
+		choices = []
+	_log_event("[EVENT] %s" % title)
+	if text != "":
+		_log_event(text)
+	if choices.size() > 0:
+		var choices_str: String = ""
+		for i in choices.size():
+			choices_str += str(choices[i])
+			if i < choices.size() - 1:
+				choices_str += ", "
+		_log_event("Choices: %s" % choices_str)
+	# For now, auto-resolve the first choice to demonstrate flow
+	events.resolve_event(0)
+
+func _on_event_resolved(event_id: String, choice_index: int, outcome: Dictionary) -> void:
+	# Show outcome note and refresh UI so stat changes are visible
+	if outcome.has("note"):
+		_log_event("Outcome: %s" % str(outcome["note"]))
+	if outcome.has("inventory_loss_pct"):
+		_log_event("Inventory loss: %d%%" % int(outcome["inventory_loss_pct"]))
+	if outcome.has("market_buff"):
+		_log_event("Market buff active for %s" % str(outcome["market_buff"]))
+	_update_ui()
+
+func _on_event_notification(message: String) -> void:
+	_log_event(message)
 
 func _on_transaction_complete(profit, message):
 	# MODIFIED: Use player_state to manage money
